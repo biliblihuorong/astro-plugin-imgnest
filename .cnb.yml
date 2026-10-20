@@ -1,0 +1,23 @@
+pipeline:
+  - stage: 测试
+    name: 单元测试
+    steps:
+      - step: npmbuild@nodejs
+        name: 安装依赖并测试
+        inputs:
+          node_version: "20"
+          commands:
+            - npm ci
+            - npx vitest run
+
+triggers:
+  push:
+    branches:
+      include:
+        - main
+        - "feat/**"
+        - "fix/**"
+  pr:
+    branches:
+      include:
+        - main

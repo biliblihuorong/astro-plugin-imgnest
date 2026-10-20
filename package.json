@@ -1,0 +1,36 @@
+{
+  "name": "astro-plugin-imgnest",
+  "version": "0.1.0",
+  "description": "ImgNest responsive images plugin for Astro",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "astro",
+    "astro-integration",
+    "imgnest",
+    "responsive-images",
+    "srcset",
+    "image-optimization",
+    "rehype"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "astro": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "astro": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "astro": "^5.0.0",
+    "vitest": "^2.1.0"
+  }
+}
