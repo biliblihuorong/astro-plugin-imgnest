@@ -244,3 +244,30 @@ describe("rewriteTree", () => {
     expect(imgs[1].properties.srcSet).toContain("b_400.webp");
   });
 });
+
+describe("review fixes", () => {
+  const variants = new Map([
+    ["https://img.example.com/a.webp", variants400_800],
+  ]);
+
+  function imgNode(props) {
+    return { type: "element", tagName: "img", properties: props, children: [] };
+  }
+
+  function singleTree(node) {
+    return { type: "root", children: [node] };
+  }
+
+  it("protects valid compact srcset without whitespace after the comma", () => {
+    const node = imgNode({
+      src: "https://img.example.com/a.webp",
+      srcSet: "https://img.example.com/a.webp 1x,https://img.example.com/a_800.webp 2x",
+    });
+    rewriteTree(singleTree(node), variants, {});
+    expect(node.properties.srcSet).toBe("https://img.example.com/a.webp 1x,https://img.example.com/a_800.webp 2x");
+  });
+
+  it("treats placeholder srcset with trailing comma as replaceable", () => {
+    expect(isPlaceholderSrcset("https://img.example.com/a.webp 1x,", "https://img.example.com/a.webp", "https://img.example.com/a.webp")).toBe(true);
+  });
+});

@@ -80,14 +80,15 @@ No requests are made; variant URLs are built from the template. `{url}` is the o
 ## Scope and behavior
 
 - Processes Markdown pages (`.md`) through a rehype plugin: both `![]()` images and inline `<img>` tags in Markdown.
-- Does **not** process `.mdx` pages or `<img>` rendered inside Astro components — Astro's `markdown.rehypePlugins` only applies to `.md` pages.
+- `.mdx` is covered too when the official MDX integration inherits the markdown config (`extendMarkdownConfig: true`, its default); `<img>` rendered inside Astro component templates is never processed.
 - The rehype plugin is **appended** to your own `markdown.rehypePlugins`, so your existing rehype config is preserved.
 - Images that already have a `srcset` are skipped; an existing `sizes` is never overwritten.
 - Lazy-load attributes (`data-src`, `data-lazy-src`, `data-original`) take priority over `src`.
-- The original URL is kept as the last `srcset` entry, and with `fallbackOnError` an `onerror` handler removes the `srcset` if a variant fails to load, so images always fall back to the original.
+- The original URL is kept as the last `srcset` entry for every image, and with `fallbackOnError` an `onerror` handler removes the `srcset` of `src`-based images when a variant fails to load (lazy-load images are left to their loading library).
 - Lookup results are cached for the whole build: every URL is queried once, no matter how many pages use it.
-- On a non-200 answer (for example ImgNest's default rate limit of 60 lookups per minute per IP) the plugin logs a warning once and keeps the original URLs; on `429` it stops querying for the rest of the build. Raise `variant_lookup_per_minute` on your ImgNest server if your site is large.
+- On a non-200 answer (for example ImgNest's default rate limit of 60 lookups per minute per IP) the plugin logs a warning once and keeps the original URLs; after a `429` it pauses further lookups for a minute before retrying. Raise `variant_lookup_per_minute` on your ImgNest server if your site is large.
 - URLs longer than 2048 characters (the server-side limit) are skipped instead of failing the whole batch.
+- Requires Node.js >= 18 (built-in `fetch`).
 
 ## License
 

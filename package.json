@@ -1,6 +1,6 @@
 {
   "name": "astro-plugin-imgnest",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ImgNest responsive images plugin for Astro",
   "type": "module",
   "main": "./index.js",
@@ -28,6 +28,9 @@
   ],
   "license": "MIT",
   "author": "misakashell",
+  "engines": {
+    "node": ">=18"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/biliblihuorong/astro-plugin-imgnest.git"
