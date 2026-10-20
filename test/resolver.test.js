@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { HostMatcher, VariantResolver } from "../lib/resolver.js";
 
 describe("HostMatcher", () => {
@@ -169,5 +169,125 @@ describe("VariantResolver", () => {
     expect(result.size).toBe(2);
     expect(result.get("https://img.example.com/a.webp")[0].url).toContain("w_400");
     expect(result.get("https://cdn.other.com/b.webp")[0].url).toContain("w_800");
+  });
+});
+
+describe("LookupSource fetch behaviour", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  function lookupResolver() {
+    return new VariantResolver({
+      sources: [
+        {
+          type: "lookup",
+          hosts: "img.example.com",
+          endpoint: "https://img.example.com/api/variants",
+        },
+      ],
+    });
+  }
+
+  it("caches lookup results across resolve calls", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: {
+          items: [
+            {
+              found: true,
+              variants: [
+                { url: "https://img.example.com/a_400.webp", width: 400 },
+              ],
+            },
+          ],
+        },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const resolver = lookupResolver();
+
+    const first = await resolver.resolve(["https://img.example.com/a.webp"]);
+    const second = await resolver.resolve(["https://img.example.com/a.webp"]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(first.get("https://img.example.com/a.webp")[0].width).toBe(400);
+    expect(second.get("https://img.example.com/a.webp")).toEqual(
+      first.get("https://img.example.com/a.webp"),
+    );
+  });
+
+  it("warns once on 429 and stops further lookups this build", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 429,
+      json: async () => ({}),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const resolver = lookupResolver();
+
+    const first = await resolver.resolve(["https://img.example.com/a.webp"]);
+    const second = await resolver.resolve(["https://img.example.com/b.webp"]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(first.size).toBe(0);
+    expect(second.size).toBe(0);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain("429");
+  });
+
+  it("skips URLs longer than the server-side limit instead of failing the batch", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ data: { items: [] } }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const resolver = lookupResolver();
+
+    const long = `https://img.example.com/${"a".repeat(2100)}.webp`;
+    await resolver.resolve([long, "https://img.example.com/short.webp"]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sent.urls).toEqual(["https://img.example.com/short.webp"]);
+  });
+
+  it("keeps answers of successful batches when another batch fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn(async (_url, init) => {
+      const urls = JSON.parse(init.body).urls;
+      if (urls.some((u) => u.includes("a-"))) throw new Error("boom");
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: {
+            items: urls.map((u) => ({
+              found: true,
+              variants: [
+                { url: `${u.replace(/\.webp$/, "")}_400.webp`, width: 400 },
+              ],
+            })),
+          },
+        }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const resolver = lookupResolver();
+
+    const urls = Array.from(
+      { length: 60 },
+      (_, i) => `https://img.example.com/${i < 30 ? "a" : "b"}-${i}.webp`,
+    );
+    const result = await resolver.resolve(urls);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result.size).toBe(10);
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });

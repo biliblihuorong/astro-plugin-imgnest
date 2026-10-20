@@ -7,6 +7,11 @@
   "exports": {
     ".": "./index.js"
   },
+  "files": [
+    "index.js",
+    "lib",
+    "README.md"
+  ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
@@ -21,6 +26,15 @@
     "rehype"
   ],
   "license": "MIT",
+  "author": "misakashell",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biliblihuorong/astro-plugin-imgnest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/biliblihuorong/astro-plugin-imgnest/issues"
+  },
+  "homepage": "https://github.com/biliblihuorong/astro-plugin-imgnest#readme",
   "peerDependencies": {
     "astro": ">=4.0.0"
   },

@@ -73,10 +73,12 @@ export default defineConfig({
 
 通过 rehype 插件处理 hast（HTML AST）树，覆盖：
 
-- Markdown 文件中的图片（`![]()` 和内嵌 `<img>`）
-- Astro 组件中渲染的 `<img>` 元素
+- Markdown 页面（`.md`）中 `![]()` 渲染出的 `<img>`
+- Markdown 中内嵌的 `<img>` 元素
 - 已有 `srcset` 的图片跳过
 - 懒加载属性（`data-src`、`data-lazy-src`、`data-original`）优先于 `src`
+
+注意：Astro 的 `markdown.rehypePlugins` 只作用于 `.md` 页面，**不处理** `.mdx` 页面和 Astro 组件模板中渲染的 `<img>`。插件以追加方式注册 rehype 插件，不会覆盖你在 `astro.config` 里已有的 rehype 配置。
 
 ## 许可证
 

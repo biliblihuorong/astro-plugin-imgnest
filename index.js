@@ -16,12 +16,15 @@ export default function imgnestIntegration(options) {
   return {
     name: "astro-plugin-imgnest",
     hooks: {
-      "astro:config:setup": ({ updateConfig }) => {
+      "astro:config:setup": ({ config, updateConfig }) => {
         if (!resolver.hasSources) return;
 
+        // Append after the user's own rehype plugins instead of replacing
+        // them: updateConfig merges arrays by wholesale replacement.
         updateConfig({
           markdown: {
             rehypePlugins: [
+              ...(config.markdown?.rehypePlugins ?? []),
               function rehypeImgnest() {
                 return async (tree) => {
                   if (!resolver.hasSources) return;
