@@ -1,6 +1,6 @@
 {
   "name": "astro-plugin-imgnest",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "ImgNest responsive images plugin for Astro",
   "type": "module",
   "main": "./index.js",
@@ -10,7 +10,8 @@
   "files": [
     "index.js",
     "lib",
-    "README.md"
+    "README.md",
+    "README.zh-CN.md"
   ],
   "scripts": {
     "test": "vitest run",
